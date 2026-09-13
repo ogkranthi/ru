@@ -232,6 +232,11 @@
     <div class="panel-body"><div class="hist" id="hist"></div></div>
   </details>
 
+  <details class="panel">
+    <summary>Past games <span id="pastCount"></span></summary>
+    <div class="panel-body"><div class="hist" id="past"></div></div>
+  </details>
+
   <p class="note" id="note"></p>
 </div>
 
@@ -252,7 +257,7 @@
 const KEY = 'rummy:pad';
 // Pool-dependent counts: 101 pool drops 20/40, 201 pool drops 25/50.
 function quickCounts(){ return game.limit <= 101 ? [20, 40, 80] : [25, 50, 80]; }
-let game = { limit: 201, players: [], timeline: [] };
+let game = { limit: 201, players: [], timeline: [], archive: [] };
 let draft = null;
 
 /* ---------- persistence ---------- */
@@ -263,6 +268,7 @@ async function load(){
   } catch (e) { /* nothing saved yet — first game */ }
   if (!Array.isArray(game.players)) game.players = [];
   if (!Array.isArray(game.timeline)) game.timeline = [];
+  if (!Array.isArray(game.archive)) game.archive = [];
   render();
 }
 async function save(){
@@ -291,6 +297,21 @@ function roundsUpTo(i){
   let n = 0;
   for (let k = 0; k <= i; k++) if (game.timeline[k].type === 'round') n++;
   return n;
+}
+function snapshot(){
+  const { totals, outAt } = compute();
+  const results = game.players
+    .map(p => ({ name: p.name, total: totals[p.id], out: outAt[p.id] !== undefined }))
+    .sort((a, b) => a.total - b.total);
+  const standing = results.filter(r => !r.out);
+  return {
+    date: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+    limit: game.limit,
+    rounds: roundCount(),
+    complete: standing.length === 1,
+    winner: standing.length === 1 ? standing[0].name : (results[0] ? results[0].name : ''),
+    results
+  };
 }
 function roundCount(){ return game.timeline.filter(e => e.type === 'round').length; }
 function nameOf(id){ const p = game.players.find(p => p.id === id); return p ? p.name : 'Removed player'; }
@@ -380,6 +401,18 @@ function render(){
         .map(pid => esc(nameOf(pid)) + ' ' + e.scores[pid]).join(', ');
       return '<div><b>Round ' + n + '</b> &middot; ' + esc(nameOf(e.winner)) + ' won<br><em>' + (line || 'no other scores') + '</em></div>';
     }).join('');
+  }
+
+  const pastEl = document.getElementById('past');
+  document.getElementById('pastCount').textContent = game.archive.length || '';
+  if (!game.archive.length) {
+    pastEl.innerHTML = '<em style="font-size:14px">Nothing filed yet. When you start a new game, the finished one lands here.</em>';
+  } else {
+    pastEl.innerHTML = game.archive.map(g =>
+      '<div><b>' + esc(g.winner) + (g.complete ? ' won' : ' led') + '</b> &middot; ' + g.date +
+      '<br><em>' + g.rounds + (g.rounds === 1 ? ' round' : ' rounds') + ' to ' + g.limit + ' &middot; ' +
+      g.results.map(r => esc(r.name) + ' ' + r.total).join(', ') + '</em></div>'
+    ).join('') + '<button class="ghost" id="clearHist" style="margin-top:14px">Clear past games</button>';
   }
 }
 function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -494,7 +527,11 @@ document.getElementById('ghostbar').addEventListener('click', async e => {
   if (e.target.id === 'undoBtn') {
     game.timeline.pop();
   } else if (e.target.id === 'resetBtn') {
-    if (!confirm('Clear all rounds and start fresh? Players stay.')) return;
+    if (!confirm('File this game under Past games and start fresh? Players stay.')) return;
+    if (roundCount()) {
+      game.archive.unshift(snapshot());
+      if (game.archive.length > 50) game.archive.length = 50;
+    }
     game.timeline = [];
   } else return;
   render();
@@ -509,6 +546,14 @@ document.getElementById('rows').addEventListener('click', async e => {
   if (!active.length) return;
   const pts = Math.max(...active.map(p => totals[p.id]));
   game.timeline.push({ type: 'rejoin', pid: r.dataset.id, points: pts });
+  render();
+  await save();
+});
+
+document.getElementById('past').addEventListener('click', async e => {
+  if (e.target.id !== 'clearHist') return;
+  if (!confirm('Delete every past game record? This cannot be undone.')) return;
+  game.archive = [];
   render();
   await save();
 });
