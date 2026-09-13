@@ -1,0 +1,511 @@
+<meta charset="utf-8">
+<title>Rummy pad</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#143128">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rummy pad">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,600&display=swap');
+
+  :root{
+    --felt:#143128;
+    --felt-deep:#0D211B;
+    --paper:#F7F3E8;
+    --rule:#DCD4C1;
+    --margin-rule:#C8544A;
+    --ink:#1B2621;
+    --ink-soft:#6E7C74;
+    --red:#B23B30;
+    --gold:#B98A3C;
+  }
+
+  *{box-sizing:border-box}
+
+  body{
+    margin:0;
+    padding:18px 12px 60px;
+    background:var(--felt);
+    background-image:radial-gradient(120% 70% at 50% 0%, #1B3D32 0%, var(--felt-deep) 100%);
+    font-family:'Archivo', system-ui, -apple-system, sans-serif;
+    color:var(--ink);
+    -webkit-text-size-adjust:100%;
+  }
+
+  .wrap{max-width:540px;margin:0 auto}
+
+  /* ---------- masthead ---------- */
+  .masthead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 4px 14px}
+  .masthead h1{
+    font-family:'Fraunces', Georgia, serif;
+    font-weight:600;font-size:27px;line-height:1;letter-spacing:-.01em;
+    color:var(--paper);margin:0;
+  }
+  .masthead .meta{font-size:13px;color:#9DB3A8;text-align:right;line-height:1.5}
+
+  /* ---------- the pad ---------- */
+  .pad{
+    background:var(--paper);
+    border-radius:3px;
+    box-shadow:0 1px 0 #FFFDF6 inset, 0 10px 26px rgba(0,0,0,.35);
+    overflow:hidden;
+    position:relative;
+  }
+  .pad::before{
+    content:"";position:absolute;top:0;bottom:0;left:38px;width:1px;
+    background:var(--margin-rule);opacity:.5;
+  }
+
+  .pad-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:13px 16px 11px 52px;border-bottom:1px solid var(--rule);
+    font-size:13px;color:var(--ink-soft);
+  }
+  .pad-head b{color:var(--ink);font-weight:600}
+
+  /* ---------- player rows ---------- */
+  .row{
+    display:grid;grid-template-columns:38px 1fr auto;align-items:center;
+    border-bottom:1px solid var(--rule);min-height:62px;
+  }
+  .row:last-child{border-bottom:none}
+  .rank{
+    font-family:'Fraunces', Georgia, serif;font-size:15px;color:var(--ink-soft);
+    text-align:center;align-self:center;
+  }
+  .who{padding:10px 10px 10px 14px;min-width:0}
+  .name{font-size:16px;font-weight:500;line-height:1.25;word-break:break-word}
+  .sub{font-size:12.5px;color:var(--ink-soft);margin-top:3px}
+  .bar{height:3px;background:var(--rule);border-radius:2px;margin-top:7px;max-width:170px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--ink);transition:width .45s cubic-bezier(.2,.7,.3,1)}
+  .bar i.warn{background:var(--red)}
+  .total{
+    font-family:'Fraunces', Georgia, serif;font-size:31px;line-height:1;
+    padding:0 16px 0 8px;text-align:right;min-width:78px;
+  }
+
+  .row.out{background:#EFEADC}
+  .row.out .name,.row.out .total{color:#A3A093;text-decoration:line-through;text-decoration-thickness:1px}
+  .row.out .rank{color:#BDBAAD}
+  .row.champ .total{color:var(--gold)}
+
+  .empty{padding:30px 20px 30px 52px;color:var(--ink-soft);font-size:14.5px;line-height:1.55}
+
+  /* ---------- buttons ---------- */
+  button{font-family:inherit;font-size:15px;cursor:pointer;border:none;background:none;color:inherit}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+  .primary{
+    display:block;width:100%;margin-top:16px;padding:15px;
+    background:var(--paper);color:var(--ink);border-radius:999px;
+    font-size:16px;font-weight:600;letter-spacing:.01em;
+    box-shadow:0 6px 16px rgba(0,0,0,.28);
+  }
+  .primary:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+
+  .ghost{
+    padding:9px 14px;border:1px solid rgba(247,243,232,.35);border-radius:999px;
+    color:var(--paper);font-size:13.5px;
+  }
+  .ghostbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+
+  .mini{
+    padding:6px 11px;border:1px solid var(--rule);border-radius:999px;
+    font-size:12.5px;color:var(--ink-soft);margin-right:14px;
+  }
+
+  /* ---------- winner banner ---------- */
+  .banner{
+    background:var(--paper);border-radius:3px;padding:20px 20px 20px 52px;position:relative;
+    box-shadow:0 10px 26px rgba(0,0,0,.35);margin-bottom:12px;
+  }
+  .banner::before{content:"";position:absolute;top:0;bottom:0;left:38px;width:1px;background:var(--margin-rule);opacity:.5}
+  .banner h2{font-family:'Fraunces',Georgia,serif;font-size:24px;margin:0 0 4px;font-weight:600}
+  .banner p{margin:0;font-size:14px;color:var(--ink-soft)}
+
+  /* ---------- panels ---------- */
+  details.panel{margin-top:14px;background:rgba(247,243,232,.07);border-radius:3px;border:1px solid rgba(247,243,232,.16)}
+  details.panel > summary{padding:13px 16px;color:var(--paper);font-size:14.5px;cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+  details.panel > summary::-webkit-details-marker{display:none}
+  details.panel > summary span{color:#9DB3A8;font-size:13px}
+  .panel-body{padding:4px 16px 16px;color:var(--paper)}
+
+  .pl{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(247,243,232,.13);font-size:15px}
+  .pl:last-of-type{border-bottom:none}
+  .pl button{color:#E6A49C;font-size:13px;padding:4px 6px}
+
+  .addrow{display:flex;gap:8px;margin-top:12px}
+  input[type=text],input[type=number]{
+    font-family:inherit;font-size:16px;padding:11px 12px;border-radius:3px;
+    border:1px solid var(--rule);background:var(--paper);color:var(--ink);width:100%;
+  }
+  .addrow button{background:var(--paper);color:var(--ink);border-radius:3px;padding:0 18px;font-weight:600;flex:none}
+
+  .limits{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+  .limits button{padding:9px 16px;border:1px solid rgba(247,243,232,.35);border-radius:999px;color:var(--paper);font-size:14px}
+  .limits button[aria-pressed=true]{background:var(--paper);color:var(--ink);border-color:var(--paper);font-weight:600}
+
+  .hist{font-size:14px;line-height:1.6}
+  .hist div{padding:7px 0;border-bottom:1px solid rgba(247,243,232,.13)}
+  .hist div:last-child{border-bottom:none}
+  .hist b{font-weight:600}
+  .hist em{font-style:normal;color:#9DB3A8}
+
+  /* ---------- score sheet ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(8,20,16,.62);display:none;z-index:20}
+  .scrim.on{display:block}
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:92vh;overflow-y:auto;
+    background:var(--paper);border-radius:14px 14px 0 0;padding:18px 16px 26px;
+    transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.7,.3,1);
+  }
+  .sheet.on{transform:translateY(0)}
+  .sheet-inner{max-width:540px;margin:0 auto}
+  .sheet h2{font-family:'Fraunces',Georgia,serif;font-size:21px;margin:0 0 2px;font-weight:600}
+  .sheet .hint{font-size:13.5px;color:var(--ink-soft);margin:0 0 14px}
+
+  .entry{padding:12px 0;border-bottom:1px solid var(--rule)}
+  .entry-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .entry-top .nm{font-size:16px;font-weight:500}
+  .chips{display:flex;gap:6px;align-items:center;margin-top:9px;flex-wrap:wrap}
+  .chip{padding:8px 13px;border:1px solid var(--rule);border-radius:999px;font-size:13.5px;background:#FFFDF6}
+  .chip[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip.win[aria-pressed=true]{background:var(--gold);border-color:var(--gold);color:#1B1405}
+  .chips input{width:74px;text-align:center;padding:8px 6px;font-size:15px}
+  .entry.winner{background:#FBF7EA;margin:0 -10px;padding-left:10px;padding-right:10px;border-radius:3px}
+
+  .sheet-actions{display:flex;gap:10px;margin-top:18px}
+  .sheet-actions button{flex:1;padding:14px;border-radius:999px;font-size:15.5px;font-weight:600}
+  .save{background:var(--ink);color:var(--paper)}
+  .save:disabled{opacity:.35}
+  .cancel{border:1px solid var(--rule);color:var(--ink-soft)}
+
+  .note{margin:16px 4px 0;font-size:12.5px;color:#8FA79B;text-align:center;line-height:1.55}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important}
+  }
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <h1>Rummy pad</h1>
+    <div class="meta" id="meta"></div>
+  </div>
+
+  <div id="bannerSlot"></div>
+
+  <div class="pad">
+    <div class="pad-head">
+      <span id="padHead">Standings</span>
+      <span><b id="limitLabel">201</b> knocks you out</span>
+    </div>
+    <div id="rows"></div>
+  </div>
+
+  <button class="primary" id="newRound">Score a round</button>
+  <div class="ghostbar" id="ghostbar"></div>
+
+  <details class="panel">
+    <summary>Players <span id="plCount"></span></summary>
+    <div class="panel-body">
+      <div id="playerList"></div>
+      <div class="addrow">
+        <input type="text" id="newName" placeholder="Add a player" autocomplete="off" maxlength="18">
+        <button id="addBtn">Add</button>
+      </div>
+    </div>
+  </details>
+
+  <details class="panel">
+    <summary>Knock-out score <span id="limitPeek"></span></summary>
+    <div class="panel-body">
+      <div class="limits" id="limits"></div>
+      <p style="font-size:13px;color:#9DB3A8;margin:12px 0 0;line-height:1.55">
+        Reach this total and you're out. Changing it re-checks everyone against the rounds already played.
+      </p>
+    </div>
+  </details>
+
+  <details class="panel">
+    <summary>Rounds played <span id="histCount"></span></summary>
+    <div class="panel-body"><div class="hist" id="hist"></div></div>
+  </details>
+
+  <p class="note">Scores are saved in this browser on this device. Quick points are the 13-card counts: 20 first drop, 40 middle drop, 80 full count.</p>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-inner">
+    <h2>Round <span id="roundNo"></span></h2>
+    <p class="hint">Tap <b>Won</b> for whoever went out, then count up everyone else.</p>
+    <div id="entries"></div>
+    <div class="sheet-actions">
+      <button class="cancel" id="cancelBtn">Cancel</button>
+      <button class="save" id="saveBtn" disabled>Save round</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY = 'rummy:pad';
+const QUICK = [20, 40, 80];
+let game = { limit: 201, players: [], timeline: [] };
+let draft = null;
+
+/* ---------- persistence ---------- */
+async function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) game = JSON.parse(raw);
+  } catch (e) { /* nothing saved yet — first game */ }
+  if (!Array.isArray(game.players)) game.players = [];
+  if (!Array.isArray(game.timeline)) game.timeline = [];
+  render();
+}
+async function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(game)); }
+  catch (e) { console.error('Could not save the pad', e); }
+}
+
+/* ---------- state ---------- */
+function compute(){
+  const totals = {}, outAt = {};
+  game.players.forEach(p => totals[p.id] = 0);
+  game.timeline.forEach((e, i) => {
+    if (e.type === 'round') {
+      for (const pid in e.scores) {
+        if (totals[pid] === undefined || outAt[pid] !== undefined) continue;
+        totals[pid] += e.scores[pid];
+        if (totals[pid] >= game.limit) outAt[pid] = roundsUpTo(i);
+      }
+    } else if (e.type === 'rejoin') {
+      if (totals[e.pid] !== undefined) { totals[e.pid] = e.points; delete outAt[e.pid]; }
+    }
+  });
+  return { totals, outAt };
+}
+function roundsUpTo(i){
+  let n = 0;
+  for (let k = 0; k <= i; k++) if (game.timeline[k].type === 'round') n++;
+  return n;
+}
+function roundCount(){ return game.timeline.filter(e => e.type === 'round').length; }
+function nameOf(id){ const p = game.players.find(p => p.id === id); return p ? p.name : 'Removed player'; }
+
+/* ---------- render ---------- */
+function render(){
+  const { totals, outAt } = compute();
+  const active = game.players.filter(p => outAt[p.id] === undefined);
+  const champ = (game.players.length > 1 && active.length === 1 && roundCount() > 0) ? active[0] : null;
+
+  document.getElementById('limitLabel').textContent = game.limit;
+  document.getElementById('limitPeek').textContent = game.limit;
+  document.getElementById('plCount').textContent = game.players.length || '';
+  document.getElementById('histCount').textContent = roundCount() || '';
+  document.getElementById('meta').innerHTML = game.players.length
+    ? roundCount() + (roundCount() === 1 ? ' round' : ' rounds') + '<br>' + active.length + ' still in'
+    : '';
+
+  document.getElementById('bannerSlot').innerHTML = champ
+    ? '<div class="banner"><h2>' + esc(champ.name) + ' takes it</h2><p>Last one standing on ' + totals[champ.id] + ' points after ' + roundCount() + ' rounds.</p></div>'
+    : '';
+
+  document.getElementById('padHead').textContent = champ ? 'Final card' : 'Standings';
+
+  /* standings */
+  const rowsEl = document.getElementById('rows');
+  if (!game.players.length) {
+    rowsEl.innerHTML = '<div class="empty">No one at the table yet. Open <b>Players</b> below and add everyone playing.</div>';
+  } else {
+    const order = [...game.players].sort((a, b) => {
+      const ao = outAt[a.id] !== undefined, bo = outAt[b.id] !== undefined;
+      if (ao !== bo) return ao ? 1 : -1;
+      return totals[a.id] - totals[b.id];
+    });
+    const topActive = active.length ? Math.max(...active.map(p => totals[p.id])) : 0;
+    rowsEl.innerHTML = order.map((p, i) => {
+      const out = outAt[p.id] !== undefined;
+      const left = game.limit - totals[p.id];
+      const pct = Math.min(100, Math.round(totals[p.id] / game.limit * 100));
+      let sub;
+      if (out) sub = 'Out in round ' + outAt[p.id] +
+        (active.length ? ' &middot; <button class="rejoin" data-id="' + p.id + '" style="color:var(--red);font-size:12.5px;padding:0;text-decoration:underline">rejoin at ' + topActive + '</button>' : '');
+      else if (champ && champ.id === p.id) sub = 'Winner';
+      else sub = left + ' to go';
+      return '<div class="row' + (out ? ' out' : '') + (champ && champ.id === p.id ? ' champ' : '') + '">' +
+        '<div class="rank">' + (out ? '&mdash;' : i + 1) + '</div>' +
+        '<div class="who"><div class="name">' + esc(p.name) + '</div><div class="sub">' + sub + '</div>' +
+        (out ? '' : '<div class="bar"><i class="' + (pct > 74 ? 'warn' : '') + '" style="width:' + pct + '%"></i></div>') +
+        '</div>' +
+        '<div class="total">' + totals[p.id] + '</div></div>';
+    }).join('');
+  }
+
+  /* actions */
+  const btn = document.getElementById('newRound');
+  btn.disabled = active.length < 2 || !!champ;
+  btn.textContent = champ ? 'Game over' : (active.length < 2 ? 'Add at least two players' : 'Score a round');
+
+  const gb = document.getElementById('ghostbar');
+  gb.innerHTML = (game.timeline.length ? '<button class="ghost" id="undoBtn">Undo last entry</button>' : '') +
+    (roundCount() ? '<button class="ghost" id="resetBtn">Start a new game</button>' : '');
+
+  /* players */
+  document.getElementById('playerList').innerHTML = game.players.length
+    ? game.players.map(p => '<div class="pl"><span>' + esc(p.name) + '</span><button class="del" data-id="' + p.id + '">Remove</button></div>').join('')
+    : '<div style="font-size:14px;color:#9DB3A8">Nobody added yet.</div>';
+
+  /* limits */
+  document.getElementById('limits').innerHTML =
+    [101, 201, 301].map(v => '<button class="lim" data-v="' + v + '" aria-pressed="' + (game.limit === v) + '">' + v + '</button>').join('') +
+    '<button class="lim" data-v="custom" aria-pressed="' + ([101,201,301].includes(game.limit) ? 'false' : 'true') + '">Other</button>';
+
+  /* history */
+  const h = document.getElementById('hist');
+  if (!game.timeline.length) h.innerHTML = '<em style="font-size:14px">Nothing scored yet.</em>';
+  else {
+    let n = 0;
+    h.innerHTML = game.timeline.map(e => {
+      if (e.type === 'rejoin') return '<div><em>' + esc(nameOf(e.pid)) + ' rejoined at ' + e.points + '</em></div>';
+      n++;
+      const line = Object.keys(e.scores).filter(pid => pid !== e.winner)
+        .map(pid => esc(nameOf(pid)) + ' ' + e.scores[pid]).join(', ');
+      return '<div><b>Round ' + n + '</b> &middot; ' + esc(nameOf(e.winner)) + ' won<br><em>' + (line || 'no other scores') + '</em></div>';
+    }).join('');
+  }
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- score sheet ---------- */
+function openSheet(){
+  const { totals, outAt } = compute();
+  const active = game.players.filter(p => outAt[p.id] === undefined);
+  draft = { winner: null, scores: {} };
+  active.forEach(p => draft.scores[p.id] = 0);
+  document.getElementById('roundNo').textContent = roundCount() + 1;
+  drawEntries(active);
+  document.getElementById('scrim').classList.add('on');
+  document.getElementById('sheet').classList.add('on');
+}
+function drawEntries(active){
+  document.getElementById('entries').innerHTML = active.map(p => {
+    const won = draft.winner === p.id;
+    const val = draft.scores[p.id];
+    return '<div class="entry' + (won ? ' winner' : '') + '">' +
+      '<div class="entry-top"><span class="nm">' + esc(p.name) + '</span>' +
+      '<button class="chip win" data-win="' + p.id + '" aria-pressed="' + won + '">' + (won ? 'Won this round' : 'Won') + '</button></div>' +
+      (won ? '' : '<div class="chips">' +
+        QUICK.map(q => '<button class="chip q" data-id="' + p.id + '" data-v="' + q + '" aria-pressed="' + (val === q) + '">' + q + '</button>').join('') +
+        '<input type="number" inputmode="numeric" min="0" max="200" data-num="' + p.id + '" value="' + val + '" aria-label="Points for ' + esc(p.name) + '"></div>') +
+      '</div>';
+  }).join('');
+  document.getElementById('saveBtn').disabled = !draft.winner;
+}
+function closeSheet(){
+  document.getElementById('scrim').classList.remove('on');
+  document.getElementById('sheet').classList.remove('on');
+  draft = null;
+}
+
+/* ---------- events ---------- */
+document.getElementById('newRound').onclick = openSheet;
+document.getElementById('cancelBtn').onclick = closeSheet;
+document.getElementById('scrim').onclick = closeSheet;
+
+document.getElementById('sheet').addEventListener('click', e => {
+  const w = e.target.closest('[data-win]');
+  const q = e.target.closest('.q');
+  if (!draft) return;
+  if (w) {
+    const id = w.dataset.win;
+    draft.winner = draft.winner === id ? null : id;
+    if (draft.winner) draft.scores[id] = 0;
+  } else if (q) {
+    const id = q.dataset.id, v = +q.dataset.v;
+    draft.scores[id] = draft.scores[id] === v ? 0 : v;
+  } else return;
+  const { outAt } = compute();
+  drawEntries(game.players.filter(p => outAt[p.id] === undefined));
+});
+
+document.getElementById('sheet').addEventListener('input', e => {
+  const n = e.target.closest('[data-num]');
+  if (!n || !draft) return;
+  let v = parseInt(n.value, 10);
+  if (isNaN(v) || v < 0) v = 0;
+  if (v > 200) v = 200;
+  draft.scores[n.dataset.num] = v;
+});
+
+document.getElementById('saveBtn').onclick = async () => {
+  if (!draft || !draft.winner) return;
+  draft.scores[draft.winner] = 0;
+  game.timeline.push({ type: 'round', winner: draft.winner, scores: { ...draft.scores } });
+  closeSheet();
+  render();
+  await save();
+};
+
+document.getElementById('addBtn').onclick = addPlayer;
+document.getElementById('newName').addEventListener('keydown', e => { if (e.key === 'Enter') addPlayer(); });
+async function addPlayer(){
+  const input = document.getElementById('newName');
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  game.players.push({ id: 'p' + Date.now() + Math.floor(Math.random() * 99), name });
+  input.value = '';
+  render();
+  input.focus();
+  await save();
+}
+
+document.getElementById('playerList').addEventListener('click', async e => {
+  const d = e.target.closest('.del');
+  if (!d) return;
+  const p = game.players.find(x => x.id === d.dataset.id);
+  if (!p) return;
+  if (roundCount() && !confirm('Remove ' + p.name + '? Their scores go with them.')) return;
+  game.players = game.players.filter(x => x.id !== d.dataset.id);
+  render();
+  await save();
+});
+
+document.getElementById('limits').addEventListener('click', async e => {
+  const b = e.target.closest('.lim');
+  if (!b) return;
+  if (b.dataset.v === 'custom') {
+    const v = parseInt(prompt('Knock-out score?', game.limit), 10);
+    if (!v || v < 10) return;
+    game.limit = v;
+  } else game.limit = +b.dataset.v;
+  render();
+  await save();
+});
+
+document.getElementById('ghostbar').addEventListener('click', async e => {
+  if (e.target.id === 'undoBtn') {
+    game.timeline.pop();
+  } else if (e.target.id === 'resetBtn') {
+    if (!confirm('Clear all rounds and start fresh? Players stay.')) return;
+    game.timeline = [];
+  } else return;
+  render();
+  await save();
+});
+
+document.getElementById('rows').addEventListener('click', async e => {
+  const r = e.target.closest('.rejoin');
+  if (!r) return;
+  const { totals, outAt } = compute();
+  const active = game.players.filter(p => outAt[p.id] === undefined);
+  if (!active.length) return;
+  const pts = Math.max(...active.map(p => totals[p.id]));
+  game.timeline.push({ type: 'rejoin', pid: r.dataset.id, points: pts });
+  render();
+  await save();
+});
+
+load();
+</script>
