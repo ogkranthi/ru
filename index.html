@@ -232,7 +232,7 @@
     <div class="panel-body"><div class="hist" id="hist"></div></div>
   </details>
 
-  <p class="note">Scores are saved in this browser on this device. Quick points are the 13-card counts: 20 first drop, 40 middle drop, 80 full count.</p>
+  <p class="note" id="note"></p>
 </div>
 
 <div class="scrim" id="scrim"></div>
@@ -250,7 +250,8 @@
 
 <script>
 const KEY = 'rummy:pad';
-const QUICK = [20, 40, 80];
+// Pool-dependent counts: 101 pool drops 20/40, 201 pool drops 25/50.
+function quickCounts(){ return game.limit <= 101 ? [20, 40, 80] : [25, 50, 80]; }
 let game = { limit: 201, players: [], timeline: [] };
 let draft = null;
 
@@ -313,6 +314,11 @@ function render(){
     : '';
 
   document.getElementById('padHead').textContent = champ ? 'Final card' : 'Standings';
+
+  const q = quickCounts();
+  document.getElementById('note').textContent =
+    'Scores are saved in this browser on this device. Quick points follow the ' + game.limit + ' pool: ' +
+    q[0] + ' first drop, ' + q[1] + ' middle drop, ' + q[2] + ' full count.';
 
   /* standings */
   const rowsEl = document.getElementById('rows');
@@ -397,7 +403,7 @@ function drawEntries(active){
       '<div class="entry-top"><span class="nm">' + esc(p.name) + '</span>' +
       '<button class="chip win" data-win="' + p.id + '" aria-pressed="' + won + '">' + (won ? 'Won this round' : 'Won') + '</button></div>' +
       (won ? '' : '<div class="chips">' +
-        QUICK.map(q => '<button class="chip q" data-id="' + p.id + '" data-v="' + q + '" aria-pressed="' + (val === q) + '">' + q + '</button>').join('') +
+        quickCounts().map(q => '<button class="chip q" data-id="' + p.id + '" data-v="' + q + '" aria-pressed="' + (val === q) + '">' + q + '</button>').join('') +
         '<input type="number" inputmode="numeric" min="0" max="200" data-num="' + p.id + '" value="' + val + '" aria-label="Points for ' + esc(p.name) + '"></div>') +
       '</div>';
   }).join('');
